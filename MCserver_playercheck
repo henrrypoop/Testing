@@ -1,5 +1,3 @@
-#A script used to check for player activity after a certain amount of time,relies on minecraft latest.log
-#Unfinished.
 #!/bin/bash
 
 #Function to send list command to server
@@ -7,7 +5,7 @@ sendlist(){
 > $PWD/logs/latest.log #clear the log file.
 #Send the command 'list' to the console to check for player count.
 screen -S TESTING -X eval 'stuff "list"\015'
-sleep 4 #wait 4 seconds before sending another command
+sleep 3 #wait 3 seconds before sending another command
 
 }
 
@@ -16,22 +14,15 @@ while true;do
     sendlist
   		#check the log file whether there are players or not.
 if grep -q "are 0" logs/latest.log;then # grep -q outputs an exit code,true if ran successfull
- 
-   > $PWD/logs/latest.log
-
-	 screen -S TESTING -X eval 'stuff "say Server is shutting down in 5 seconds soon due to inactivity..."\015'
-	 sleep 5
-   screen -S TESTING -X eval 'stuff "say Performing one final player check..."\015'
-   sleep 2
-   
+   sleep 10 # Wait another 10 seconds to see whether a player joins or not...
    sendlist
    
    if grep -q "are 0" logs/latest.log;then
-   > $PWD/logs/latest.log #clear the log file.
+
    	#Send the command 'stop' to the console to stop the server.
-   screen -S TESTING -X eval 'stuff "say Server is shutting down..."\015'
-   screen -S TESTING -X eval 'stuff "stop"\015'
-   break
+    screen -S TESTING -X eval 'stuff "say Server is shutting down..."\015'
+    screen -S TESTING -X eval 'stuff "stop"\015'
+    break
    else
    screen -S TESTING -X eval 'stuff "say Shutdown halted: Player detected"\015'
    fi
