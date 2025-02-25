@@ -1,17 +1,20 @@
 
 #!/bin/bash
+#This is meant to placed inside the server's folder.
+#As well as have an active screen session named "MCserver"
 
 #Function to send list command to server
+sleep 300 #Waits for the server to start
+#Function to send list command to server
 sendlist(){
-> $PWD/logs/latest.log #clear the log file.
+> $PWD/logs/latest.log #clear the log file for the current folder it resides in.
 #Send the command 'list' to the console to check for player count.
 screen -S MCserver -X eval 'stuff "list"\015'
 sleep 3 #wait 3 seconds before sending another command
-
 }
 
-sleep 300 #Wait 5 minutes for the server to start >>
 while true;do
+
     sendlist
                 #check the log file whether there are players or not.
 if grep -q "are 0" logs/latest.log;then # grep -q outputs an exit code,true if ran successfull
@@ -23,8 +26,10 @@ if grep -q "are 0" logs/latest.log;then # grep -q outputs an exit code,true if r
 
         #Send the command 'stop' to the console to stop the server.
     screen -S MCserver -X eval 'stuff "say Server is shutting down..."\015'
+    sleep 5
+    screen -S MCserver -X eval 'stuff "IF THERE ARE ACTIVE PLAYERS,PLEASE RESTART THE SERVER."\015'
+    sleep 5
     screen -S MCserver -X eval 'stuff "stop"\015'
-    sleep 10 #Wait for the server to fully shutdown
     sudo shutdown -h now #Then shut down the system
    else
    screen -S MCserver -X eval 'stuff "say Shutdown halted: Player detected"\015'
@@ -32,7 +37,4 @@ if grep -q "are 0" logs/latest.log;then # grep -q outputs an exit code,true if r
 fi
 sleep 1200 #sleep is basically wait for... (In this case: 20 minutes)
 done
-
-
-
 
