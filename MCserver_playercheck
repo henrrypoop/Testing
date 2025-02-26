@@ -3,38 +3,49 @@
 #This is meant to placed inside the server's folder.
 #As well as have an active screen session named "MCserver"
 
-#Function to send list command to server
-sleep 300 #Waits for the server to start
-#Function to send list command to server
+sleep 360 # Wait for the server to start and players to join.
+
+#Function to send list command and validate active users.
 sendlist(){
-> $PWD/logs/latest.log #clear the log file for the current folder it resides in.
+> $PWD/logs/latest.log #clear the log file.
 #Send the command 'list' to the console to check for player count.
 screen -S MCserver -X eval 'stuff "list"\015'
-sleep 3 #wait 3 seconds before sending another command
+sleep 3 #Wait time for the logs to be written
+#echo "$(date) >> LOG FILE: "
+cat $PWD/logs/latest.log >> auto_shutdown.log
+grep -q "are 0" $PWD/logs/latest.log # grep -q outputs an exit code,true if ran successfull
+#echo "THE EXIT CODE IS: $?"
 }
 
-while true;do
+#Function to check whether the server is still active or not...
+server_check(){
+> $PWD/logs/latest.log
+screen -S MCserver -X eval 'stuff "ls"\015'
+sleep 3
+if grep -q "[HERE]" $PWD/logs/latest.log;then
+echo "$(date): The Server is operational."
+return 0
+else
+echo "$(date): The Server is not responding! >> REBOOTING." >> auto_shutdown.log
+sudo reboot
+fi
+}
 
-    sendlist
-                #check the log file whether there are players or not.
-if grep -q "are 0" logs/latest.log;then # grep -q outputs an exit code,true if ran successfull
-   sleep 10 #Wait another 10 seconds to see whether a player would join or not.
-
-   sendlist
-
-   if grep -q "are 0" logs/latest.log;then
-
-        #Send the command 'stop' to the console to stop the server.
+while server_check;do 
+  		#check the log file whether there are players or not.
+if sendlist;then 
+       #Wait another 10 seconds to see whether a player would join or not.
+    sleep 10 
+   if sendlist;then
+    echo "$(date): EXECUTING SECOND CONDITION"
+    echo "SERVER SHUTDOWN TIME: $(date)" >> auto_shutdown.log
+   	#Send the command 'stop' to the console to stop the server.
     screen -S MCserver -X eval 'stuff "say Server is shutting down..."\015'
-    sleep 5
-    screen -S MCserver -X eval 'stuff "IF THERE ARE ACTIVE PLAYERS,PLEASE RESTART THE SERVER."\015'
-    sleep 5
     screen -S MCserver -X eval 'stuff "stop"\015'
-    sudo shutdown -h now #Then shut down the system
-   else
-   screen -S MCserver -X eval 'stuff "say Shutdown halted: Player detected"\015'
+    break
+    else
+     screen -S MCserver -X eval 'stuff "say Shutdown halted: Player detected."\015'
    fi
 fi
-sleep 1200 #sleep is basically wait for... (In this case: 20 minutes)
+sleep 600 #how long before each runtime.
 done
-
